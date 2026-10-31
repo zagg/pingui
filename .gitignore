@@ -6,3 +6,4 @@ check_*.txt
 test_*.txt
 rel_*.txt
 errs.txt
+dist/*.exe

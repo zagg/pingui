@@ -8,17 +8,21 @@ use std::time::Duration;
 #[command(
     name = "pingui",
     version,
-    about = "Ping graphique en terminal — ICMP natif, multi-vues, percentiles, jitter, export CSV/JSON",
+    about = "Ping graphique avec historique — fenêtre GUI par défaut, TUI (-T) et batch (-b) en bonus",
     after_help = "EXEMPLES:\n  \
-        pingui example.com                  TUI temps réel sur example.com\n  \
+        pingui                              ouvre la fenêtre graphique (défaut de pingui.exe)\n  \
+        pingui example.com                  fenêtre lancée sur example.com\n  \
         pingui 8.8.8.8 -i 200ms -n 50       50 paquets toutes les 200 ms\n  \
         pingui 1.1.1.1 --csv out.csv        export CSV en continu\n  \
-        pingui ::1 -6                       IPv6 (fonctionne sans privilèges)\n  \
-        pingui --demo                       trafic simulé, aucun droit requis\n  \
-        pingui example.com -b               mode texte classique, sans TUI\n\n\
-        CLAVES (TUI):\n  \
-        m vue (tableau/courbe/carte/histogramme) · p pause · s paquet unique\n  \
-        +/- cadence · t seuils · e taille paquet · r reset · q/Ctrl-C quitte"
+        pingui example.com -T               affichage TERMINAL (ratatui, esprit gping)\n  \
+        pingui example.com -b               mode texte classique, sans interface\n  \
+        pingui --demo                       trafic simulé, aucun droit réseau requis\n\n\
+        NOTES:\n  \
+        pingui.exe     = fenêtre (egui) + TUI + batch\n  \
+        pingui-cli.exe = TUI + batch uniquement (binaire léger, sans dépendances GUI)\n\n\
+        CLÉS (TUI avec -T):\n  \
+        m vue (courbe/tableau/carte/distribution) · p pause · s paquet isolé\n  \
+        +/- cadence · t seuils · e taille paquet · r reset · ? aide · q/Ctrl-C quitte"
 )]
 pub struct Cli {
     /// Hôte(s) ou adresse(s) IP à interroger (plusieurs = bascule avec Tab… on ping la première)
@@ -81,10 +85,13 @@ pub struct Cli {
     #[arg(short = 'b', long)]
     pub batch: bool,
 
-    /// Interface fenêtrée — l'ancien « Graphical Ping » en mieux (nécessite la
-    /// feature de build « gui », activée par défaut)
-    #[arg(short = 'G', long)]
+    /// Interface fenêtrée — le mode par défaut (reprise du « Graphical Ping »)
+    #[arg(short = 'G', long, conflicts_with = "tui")]
     pub gui: bool,
+
+    /// Forcer l'affichage terminal (ratatui) au lieu de la fenêtre graphique
+    #[arg(short = 'T', long)]
+    pub tui: bool,
 }
 
 impl Cli {

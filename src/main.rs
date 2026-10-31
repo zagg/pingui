@@ -33,12 +33,17 @@ fn main() {
 
 fn real(opts: &cli::Cli) -> Result<i32> {
     let app = app::App::new(opts)?;
-    if opts.gui {
-        #[cfg(feature = "gui")]
+    // pingui.exe (compilé avec la feature « gui ») : fenêtre graphique par
+    // défaut. pingui-cli.exe (sans gui) : TUI par défaut. --tui/--batch
+    // forcent le terminal dans les deux cas.
+    #[cfg(feature = "gui")]
+    if !(opts.tui || opts.batch) {
         return gui::run(app).map(|_| 0);
-        #[cfg(not(feature = "gui"))]
+    }
+    #[cfg(not(feature = "gui"))]
+    if opts.gui {
         return Err(anyhow::anyhow!(
-            "ce binaire est compilé sans l'interface graphique — retirez --gui (mode TUI) ou reconstruisez avec la feature « gui »"
+            "ce binaire (pingui-cli) est compilé sans interface graphique — utilisez pingui.exe, ou le mode TUI (-T)"
         ));
     }
     let mut app = app;

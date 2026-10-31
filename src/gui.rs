@@ -47,6 +47,8 @@ impl GuiApp {
         let preset_idx = if core.cfg.preset == usize::MAX { 1 } else { core.cfg.preset };
         let host_text = if core.cfg.host_label.contains(',') || core.cfg.host_label.starts_with("démo") {
             core.resolved.map(|a| a.ip().to_string()).unwrap_or_else(|| core.cfg.host_label.clone())
+        } else if core.cfg.host_label.is_empty() {
+            "example.com".to_string() // pré-rempli : Démarrer fonctionne direct
         } else {
             core.cfg.host_label.clone()
         };

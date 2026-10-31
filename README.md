@@ -1,92 +1,104 @@
+![pingui](https://img.shields.io/github/v/release/zagg/pingui) ![test](https://github.com/zagg/pingui/workflows/CI/badge.svg)
+
 # pingui
 
-Un « gping » en mieux, écrit en **Rust**. Comme l'ancien *Graphical Ping*, vous
-voyez l'historique de latence en direct — mais avec ICMP natif (aucun processus
-`ping` externe), trois modes d'affichage, percentiles, jitter, carte de trafic,
-histogramme de distribution, export CSV/JSON et un mode simulation pour tout
-explorer sans aucun privilège réseau.
+**Ping graphique avec historique en temps réel, en Rust** — la reprise moderne
+du vieil *Graphical Ping* de Windows (hôte, taille, intervalle, Démarrer/Arrêter,
+stats + grand graphique en barres), **en mieux** : ICMP natif, tooltip au survol,
+carte de trafic, histogramme, percentiles, jitter, export CSV/JSON, et un TUI
+dans l'esprit de [gping](https://github.com/orhun/gping) pour le terminal.
 
 ```
-        ┌───────────────────────────────────────────────┐
-        │ pingui ▸ 8.8.8.8                              │
-        │ 8.8.8.8 via raw socket ICMPv4   t+12s  émis 12│
-        │ perte 0% rtt min/avg/max/mdev 29/32/35/1.4 ms │
-        │                                               │
-        │  ▃▂▄▂▅▃▂▄▂▁▃▅▇▅▃▂▄▂▁▂▃▅▃▂▁▂▄▂▃▅▇▅▃▂▄▂▁▂▃  100..0│
-        └───────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ pingui — 8.8.8.8                                             │
+│ Hôte [8.8.8.8            ] Taille[64 o] Int.[1000 ms] [■ Stop]│
+│──────────────────────────────────────────────────────────────│
+│ Dernier paquet : #509 (181 ms)   RTT récents : 175–251 ms    │
+│ RTT total min/avg/max : 29/193/255 ms   Pertes tot. : 0 (0%) │
+│ jitter 4.2 ms  p50 190 · p90 231 · p95 244 · p99 251 ms      │
+│                                                              │
+│ 500│▁▁▁▁▁▁▁▁▁▁▁▁▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▁▁▁▁▂▂▂▂▂▂▂▂▂▂▂▂▁▁▂        │
+│ 250│███▇▇▇███▇▇█▇▇███▇▇▇▇███▇▇███▇▇▇▇▇██▇▇▇▇▇███▇▇  ██│  │
+│    └──────────────────────────────────────────────────────────│
+│   [Courbe] [Carte de trafic] [Histogramme] [Paquets]          │
+│ 8.8.8.8 · [raw socket ICMPv4] · 0% perte                     │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-## Fonctionnalités
+## Les deux binaires
 
-- **ICMP natif** maison (checksum RFC 1071, horodatage dans la charge utile)
-  IPv4/IPv6, `SOCK_RAW` avec repli automatique `SOCK_DGRAM` sans privilège
-  (Linux `ping_group_range`, macOS, etc.).
-- **3 modes** :
-  - interface **fenêtrée** (egui/eframe) — la reprise moderne du *Graphical
-    Ping* : hôte / taille / intervalle / Démarrer-Arrêter, stats textuelles et
-    grand graphique en barres colorées ;
-  - **TUI** terminal (défaut) — courbe historique + 3 autres vues ;
-  - **--batch** texte à la `ping` (pilotable en script).
-- **4 vues** : courbe sparkline colorée, tableau des paquets, carte de trafic
-  (heat-map par paquet), histogramme de distribution.
-- **Mesures riches** : min/avg/max/mdev, écart-type, **jitter** (RFC 3550),
-  percentiles **p50/p90/p95/p99** sur fenêtre glissante.
-- **Contrôle temps réel** : pause, paquet isolé, cadence et taille ajustables
-  au clavier, 4 jeux de seuils de couleur pré-enregistrés, reset.
-- **Export** CSV et JSON Lines (fichier ou continu).
-- **--demo** : trafic synthétique déterministe (seed) — pertes, pics et jitter
-  sans privilège ni réseau.
+| Binaire | Rôle | Lancement sans argument |
+|---|---|---|
+| **`pingui.exe`** | interface **fenêtrée** (egui/eframe) : le « Graphical Ping » en mieux | ouvre la **fenêtre** directement |
+| **`pingui-cli.exe`** | version terminal, légère, sans dépendances graphiques | démarre le **TUI** (esprit gping) |
 
-## Construction
-
-```bash
-cargo build --release            # TUI + fenêtre + batch (feature « gui » par défaut)
-cargo build --no-default-features   # sans eframe (TUI/batch seuls, build plus léger)
-cargo test                       # 30+ tests unitaires
-```
+Le code source est unique : `pingui-cli.exe` est simplement construit avec
+`--no-default-features` (feature `gui` désactivée). Dans `pingui.exe`,
+`-T/--tui` bascule vers le TUI et `-b/--batch` vers le mode texte scriptable.
 
 ## Utilisation
 
 ```bash
-pingui example.com                 # TUI temps réel
-pingui 8.8.8.8 -i 200ms -n 50      # 50 paquets toutes les 200 ms
-pingui --gui example.com           # ouvrir la fenêtre graphique
-pingui 1.1.1.1 -b                  # mode texte (comme ping)
-pingui 1.1.1.1 --csv sortie.csv --json flux.jsonl
-pingui ::1 -6                      # IPv6
-pingui --demo                      # explorer l'interface sans droits réseau
+pingui                                # fenêtre graphique vide → taper l'hôte → Démarrer
+pingui example.com                    # fenêtre déjà lancée sur example.com
+pingui 8.8.8.8 -i 200ms -n 50         # 50 paquets toutes les 200 ms
+pingui 1.1.1.1 --csv sortie.csv --json flux.jsonl   # exports continus
+pingui example.com -T                 # TUI terminal (pingui-cli.exe : pas besoin de -T)
+pingui example.com -b                 # mode texte, une ligne par paquet (code de retour style ping)
+pingui --demo                         # trafic simulé : découvrir l'interface sans aucun droit
 ```
 
-### Clés (TUI)
+### Options principales
 
-| Touche      | Action                                        |
-|-------------|-----------------------------------------------|
-| `m` / Tab   | changer de vue (courbe, tableau, carte, dist.) |
-| `p` / Espace| pause / reprise                               |
-| `s`         | envoyer un paquet isolé (surtout en pause)     |
-| `+` / `-`   | doubler / diviser la cadence d'émission        |
-| `t`         | cycler les 4 jeux de seuils de couleur         |
-| `e`         | changer la taille du paquet ICMP               |
-| `r`         | réinitialiser les mesures                      |
-| `h` / `?`   | aide                                          |
-| `q` / Ctrl+C| quitter (affiche l'état final)                 |
+| Option | Description |
+|---|---|
+| `-n, --count N` | nombre de paquets (défaut : infini) |
+| `-i, --interval` | cadence, ex. `200ms`, `1s` (10 ms – 60 s) |
+| `-s, --size N` | taille de la charge ICMP (min 16) |
+| `--timeout` | délai avant comptabilisation d'une perte (défaut 2 s) |
+| `-4` / `-6` | forcer la famille d'adresse |
+| `--thresholds a,b,c,d` | seuils de couleur (ms) ; touche `t` pour 4 préréglages |
+| `--window N` | paquets affichés sur la courbe/carte (défaut 240) |
+| `--csv` / `--json` | écrit chaque échantillon au fil de l'eau |
+| `--demo [--seed N]` | générateur synthétique déterministe |
+
+### Clés (TUI, `pingui-cli` ou `-T`)
+
+`m`/Tab vue · `p`/Espace pause · `s` paquet isolé · `+`/`-` cadence · `t` seuils ·
+`e` taille paquet · `r` reset · `?`/`h` aide · `q`/Ctrl-C quitter (état final imprimé).
 
 ## Privilèges ICMP
 
-- **IPv6** : `SOCK_DGRAM`/ICMPv6 sans privilège sur la plupart des systèmes.
-- **Linux** : `SOCK_DGRAM` ICMP via `net.ipv4.ping_group_range`, sinon `SOCK_RAW`
-  en root / `CAP_NET_RAW`.
-- **macOS / \*BSD** : `SOCK_RAW`, donc root ou `CAP_NET_RAW`.
-- **Windows** : socket raw ICMPv4 (peut demander une session admin). En cas
-  d'échec, `pingui --demo` fait tourner toute l'interface sans privilège.
+- **Windows** : socket brut ICMPv4 (testé non surélevé sur Windows 11 ; sinon,
+  lancer en administrateur ou utiliser `--demo`).
+- **Linux** : `SOCK_DGRAM` ICMP si `net.ipv4.ping_group_range` autorise le
+  groupe, sinon `SOCK_RAW` (root / `CAP_NET_RAW`).
+- **macOS / \*BSD** : `SOCK_RAW` → root ou `CAP_NET_RAW`.
+- **IPv6 partout** : `SOCK_DGRAM`/ICMPv6, fonctionne sans privilèges.
 
-## Notes techniques
+## Compilation
 
-- `--batch` force l'écriture à la ligne pour les scripts ; l'export vers `-`
-  (stdout) est refusé avec la TUI (fournissez un nom de fichier).
-- Les pertes sont détectées soit par dépassement de délai, soit par une
-  réponse ICMP *Destination Unreachable* incorporate.
-- Le RTT est mesuré en interne via un horodatage de la session, indépendant de
-  l'horloge système.
+```bash
+cargo build --release                          # → target/release/pingui.exe (GUI + TUI)
+cargo build --release --no-default-features    # → pingui-cli.exe (TUI seul, léger)
+cargo test                                     # 30 tests unitaires (ICMP, stats, viz, CLI…)
+```
 
-Licence MIT — voir [LICENSE](LICENSE).
+Release CI : `dist/pingui-v*-windows-x86_64.zip` contient les **deux** exécutables
+précompilés ; les mêmes fichiers sont joints aux releases GitHub et Gitea.
+
+## Idées de fonctionnalités sympas
+
+- **Alerte sonore et notification** quand les pertes dépassent un seuil.
+- **Multi-hôtes côte à côte** (une courbe par cible, comparaison WAN/LAN).
+- **Enregistreur / rejeu** de session (`--record session.jsonl`, `--play`) pour
+  montrer un historique à quelqu'un d'autre.
+- **Zoom / curseur sur la courbe** (déjà: tooltip) + export PNG du graphique.
+- **GeoIP léger** : nom de l'opérateur/ville sous l'axe (base MaxMind Mini).
+- **Sondage de chemin** en option (`--trace`, façon traceroute minimal).
+- **Peaux et thème sombre/clair** dans la fenêtre.
+- **Compilage en wasm** (`eframe` + `wasm32`) : une page web de ping permanent.
+
+## Licence
+
+MIT — voir [LICENSE](LICENSE).

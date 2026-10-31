@@ -1,8 +1,8 @@
 [package]
 name = "pingui"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-description = "Ping graphique en terminal — un gping en mieux : ICMP natif, multi-vues, percentiles, jitter, export CSV/JSON"
+description = "Ping graphique avec historique — un gping en mieux : ICMP natif, fenêtre egui par défaut, TUI, percentiles, jitter, export CSV/JSON"
 license = "MIT"
 
 [dependencies]

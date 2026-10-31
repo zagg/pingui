@@ -66,10 +66,13 @@ pub struct App {
 
 impl App {
     pub fn new(cli: &Cli) -> Result<Self> {
-        if cli.hosts.is_empty() && !cli.demo && !cli.gui {
-            bail!("il faut au moins une destination (ou lancez avec --demo)\n\
+        // Fenêtre (binaire avec gui) : un lancement sans hôte est légitime,
+        // on ouvrira la fenêtre pré-remplie. En mode terminal, il faut un DST.
+        if cli.hosts.is_empty() && !cli.demo && (cli.tui || cli.batch || !cfg!(feature = "gui")) {
+            bail!("il faut au moins une destination (ou --demo)\n\
                    Usage: pingui [OPTIONS] [DST]...\n\
-                   Pour l'aide : pingui --help");
+                   Sans argument, pingui.exe ouvre la fenêtre graphique ;\n\
+                   en terminal (-T/-b ou pingui-cli.exe) un hôte est requis.");
         }
         if cli.size < 16 {
             bail!("--size minimum 16 octets");
