@@ -7,3 +7,7 @@ test_*.txt
 rel_*.txt
 errs.txt
 dist/*.exe
+relnotes.md
+gitea_b64.txt
+gitea_uid.txt
+t.csv
