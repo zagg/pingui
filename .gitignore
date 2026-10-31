@@ -1,0 +1,8 @@
+/target
+*.log
+*.tmp
+t.csv
+check_*.txt
+test_*.txt
+rel_*.txt
+errs.txt
